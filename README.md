@@ -1,6 +1,8 @@
 # PassDuino
 Lock your windows PC with Arduino (CJMCU-32)
 
+![PassDuino](https://erdesigns.eu/images/CJMCU-32.png)
+
 PassDuino is a open-source project for storing and auto typing passwords,
 it stores the passwords on a arduino (i use the CJMCU-32 with the ATMEGA32U4).
 
@@ -19,3 +21,7 @@ us on facebook: https://fb.me/erdesigns.eu
 ** Uses **
 - https://sourceforge.net/projects/comport/
 - SetupAPI by JEDI VCL
+
+![PassDuino](https://erdesigns.eu/images/PassDuino-2.png)
+![PassDuino](https://erdesigns.eu/images/PassDuino-3.png)
+![PassDuino](https://erdesigns.eu/images/PassDuino-4.png)
