@@ -22,6 +22,9 @@ us on facebook: https://fb.me/erdesigns.eu
 - https://sourceforge.net/projects/comport/
 - SetupAPI by JEDI VCL
 
+** ToDo **
+- Create a Linux variant of the PassDuino software (Lazarus, QT or Python/Bash maybe), maybe someone with a macbook can help make a MacOS version.
+
 ![PassDuino](https://erdesigns.eu/images/PassDuino-2.png)
 ![PassDuino](https://erdesigns.eu/images/PassDuino-3.png)
 ![PassDuino](https://erdesigns.eu/images/PassDuino-4.png)
