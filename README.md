@@ -14,6 +14,10 @@ You can also add global hotkey's for auto typing passwords stored in the
 PassDuino, like your gmail password, facebook etc. This allows you to use
 much more complicated / longer passwords without the need to remember them.
 
+** Buy the CJMCU-32 (€5 - €15) **
+https://www.banggood.com/CJMCU-32-Virtual-Keyboard-Badusb-For-Leonardo-USB-ATMEGA32U4-p-1098876.html?cur_warehouse=CN
+https://nl.aliexpress.com/item/4000927361014.html?spm=a2g0o.productlist.0.0.56bc64e5NYtY96&algo_pvid=82116778-919f-45f8-a5b9-528eb3c5f4e5&algo_expid=82116778-919f-45f8-a5b9-528eb3c5f4e5-38&btsid=0be3743615981235845396396edda9&ws_ab_test=searchweb0_0,searchweb201602_,searchweb201603_
+
 PassDuino is a project started by Ernst Reidinga - ERDesigns.eu (August 2020).
 For more fun software and tools go to our website: https://erdesigns.eu or like
 us on facebook: https://fb.me/erdesigns.eu
