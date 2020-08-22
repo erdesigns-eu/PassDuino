@@ -1,0 +1,39 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<BorlandProject>
+	<Transactions>
+    <Transaction>2020/07/17 14:31:21.000.263,=C:\Users\Ernst\Documents\Embarcadero\Studio\Projects\Unit30.pas</Transaction>
+    <Transaction>2020/07/23 18:33:22.000.388,=C:\Users\Ernst\Documents\Embarcadero\Studio\Projects\Unit30.pas</Transaction>
+    <Transaction>2020/07/23 19:49:24.000.984,=C:\Users\Ernst\Documents\Embarcadero\Studio\Projects\Unit30.pas</Transaction>
+    <Transaction>2020/07/23 21:22:15.000.799,=C:\Users\Ernst\Documents\Embarcadero\Studio\Projects\Unit30.pas</Transaction>
+    <Transaction>2020/08/03 21:52:36.000.682,=C:\Users\Ernst\Documents\Embarcadero\Studio\Projects\Unit30.pas</Transaction>
+    <Transaction>2020/08/21 13:13:20.000.298,=C:\Users\Ernst\Documents\Embarcadero\Studio\Projects\Unit30.pas</Transaction>
+    <Transaction>2020/08/21 13:13:42.000.467,C:\Users\Ernst\Documents\Embarcadero\Studio\Projects\Unit30.dfm=C:\Users\Ernst\Desktop\PassDuino\Units\untMain.dfm</Transaction>
+    <Transaction>2020/08/21 13:13:42.000.467,C:\Users\Ernst\Documents\Embarcadero\Studio\Projects\Unit30.pas=C:\Users\Ernst\Desktop\PassDuino\Units\untMain.pas</Transaction>
+    <Transaction>2020/08/21 13:13:54.000.547,C:\Users\Ernst\Documents\Embarcadero\Studio\Projects\Project26.dproj=C:\Users\Ernst\Desktop\PassDuino\Project\PassDuino.dproj</Transaction>
+    <Transaction>2020/08/21 13:28:52.000.195,=C:\Users\Ernst\Desktop\PassDuino\Project\Unit1.pas</Transaction>
+    <Transaction>2020/08/21 13:29:14.000.364,C:\Users\Ernst\Desktop\PassDuino\Project\Unit1.pas=C:\Users\Ernst\Desktop\PassDuino\Units\untFunctions.pas</Transaction>
+    <Transaction>2020/08/21 13:29:14.000.364,C:\Users\Ernst\Desktop\PassDuino\Project\Unit1.dfm=C:\Users\Ernst\Desktop\PassDuino\Units\untFunctions.dfm</Transaction>
+    <Transaction>2020/08/21 13:36:51.000.203,=C:\Users\Ernst\Desktop\PassDuino\Units\untUSB.pas</Transaction>
+    <Transaction>2020/08/21 16:05:23.000.022,=C:\Users\Ernst\Desktop\PassDuino\Project\Unit1.pas</Transaction>
+    <Transaction>2020/08/21 16:19:11.000.526,C:\Users\Ernst\Desktop\PassDuino\Project\Unit1.dfm=C:\Users\Ernst\Desktop\PassDuino\Units\untSettings.dfm</Transaction>
+    <Transaction>2020/08/21 16:19:11.000.526,C:\Users\Ernst\Desktop\PassDuino\Project\Unit1.pas=C:\Users\Ernst\Desktop\PassDuino\Units\untSettings.pas</Transaction>
+    <Transaction>2020/08/21 19:14:56.000.445,=C:\Users\Ernst\Desktop\PassDuino\Project\Unit1.pas</Transaction>
+    <Transaction>2020/08/21 19:32:20.000.356,C:\Users\Ernst\Desktop\PassDuino\Project\Unit1.dfm=C:\Users\Ernst\Desktop\PassDuino\Units\untAddPassword.dfm</Transaction>
+    <Transaction>2020/08/21 19:32:20.000.354,C:\Users\Ernst\Desktop\PassDuino\Project\Unit1.pas=C:\Users\Ernst\Desktop\PassDuino\Units\untAddPassword.pas</Transaction>
+    <Transaction>2020/08/21 20:14:55.000.566,=C:\Users\Ernst\Desktop\PassDuino\Project\Unit1.pas</Transaction>
+    <Transaction>2020/08/21 20:15:45.000.565,C:\Users\Ernst\Desktop\PassDuino\Project\Unit1.dfm=C:\Users\Ernst\Desktop\PassDuino\Units\untEditPassword.dfm</Transaction>
+    <Transaction>2020/08/21 20:15:45.000.565,C:\Users\Ernst\Desktop\PassDuino\Project\Unit1.pas=C:\Users\Ernst\Desktop\PassDuino\Units\untEditPassword.pas</Transaction>
+    <Transaction>2020/08/21 20:43:53.000.158,=C:\Users\Ernst\Desktop\PassDuino\Project\Unit1.pas</Transaction>
+    <Transaction>2020/08/21 20:53:18.000.239,C:\Users\Ernst\Desktop\PassDuino\Project\Unit1.pas=C:\Users\Ernst\Desktop\PassDuino\Units\untAddProfile.pas</Transaction>
+    <Transaction>2020/08/21 20:53:18.000.239,C:\Users\Ernst\Desktop\PassDuino\Project\Unit1.dfm=C:\Users\Ernst\Desktop\PassDuino\Units\untAddProfile.dfm</Transaction>
+    <Transaction>2020/08/21 21:21:47.000.005,=C:\Users\Ernst\Desktop\PassDuino\Project\Unit1.pas</Transaction>
+    <Transaction>2020/08/21 21:25:31.000.163,C:\Users\Ernst\Desktop\PassDuino\Project\Unit1.dfm=C:\Users\Ernst\Desktop\PassDuino\Units\untSelectProfile.dfm</Transaction>
+    <Transaction>2020/08/21 21:25:31.000.163,C:\Users\Ernst\Desktop\PassDuino\Project\Unit1.pas=C:\Users\Ernst\Desktop\PassDuino\Units\untSelectProfile.pas</Transaction>
+    <Transaction>2020/08/21 22:24:51.000.188,=C:\Users\Ernst\Desktop\PassDuino\Project\Unit1.pas</Transaction>
+    <Transaction>2020/08/21 22:44:01.000.644,=C:\Users\Ernst\Desktop\PassDuino\Project\Unit2.pas</Transaction>
+    <Transaction>2020/08/22 13:11:55.000.484,=C:\Users\Ernst\Desktop\PassDuino\Units\untPortDetect.pas</Transaction>
+    <Transaction>2020/08/22 13:45:13.000.360,=C:\Users\Ernst\Desktop\PassDuino\Project\Unit1.pas</Transaction>
+    <Transaction>2020/08/22 13:47:00.000.864,=C:\Users\Ernst\Desktop\PassDuino\Units\SetupApi.pas</Transaction>
+    <Transaction>2020/08/22 13:50:28.000.710,=C:\Users\Ernst\Desktop\PassDuino\Units\ModuleLoader.pas</Transaction>
+  </Transactions>
+</BorlandProject>

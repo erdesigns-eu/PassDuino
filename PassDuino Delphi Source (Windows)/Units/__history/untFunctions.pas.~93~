@@ -1,0 +1,1064 @@
+//
+//  PassDuino
+//  Version 1.0 (August 2020)
+//
+//  Made by ERDesigns - Ernst Reidinga
+//  as an open-source project
+//
+//  If you change code, add functions, fix bugs or anything else
+//  please share them - so i can update the GIT and update the code
+//  on the website so others can use it too :)
+//
+//  I used some open-source / public domain - code from Torry, and SourceForce.
+//
+//  If you like my work, and you like to support by donating please send a mail
+//  and ill send my paypal address where you can send the donation.
+//
+//
+
+unit untFunctions;
+
+interface
+
+uses
+  System.SysUtils, System.Classes, WinApi.Windows, untUSB, CPort,
+  System.Actions, Vcl.ActnList, Vcl.Menus, System.ImageList, Vcl.ImgList,
+  Vcl.Controls, Vcl.Forms, Vcl.ExtCtrls;
+
+type
+  TdmFunctions = class(TDataModule)
+    ActionList: TActionList;
+    ImageList: TImageList;
+    MainMenu: TMainMenu;
+    PassDuino1: TMenuItem;
+    Settings1: TMenuItem;
+    N1: TMenuItem;
+    Exit1: TMenuItem;
+    Password1: TMenuItem;
+    AddPassword1: TMenuItem;
+    DeletePassword1: TMenuItem;
+    N2: TMenuItem;
+    Clear1: TMenuItem;
+    N3: TMenuItem;
+    Edit1: TMenuItem;
+    Help1: TMenuItem;
+    About1: TMenuItem;
+    actSettings: TAction;
+    Profile1: TMenuItem;
+    Add1: TMenuItem;
+    acAddProfile: TAction;
+    acAddPassword: TAction;
+    acRemovePassword: TAction;
+    acClearPasswords: TAction;
+    acEditPassword: TAction;
+    acTypePassword: TAction;
+    ypePassword1: TMenuItem;
+    N5: TMenuItem;
+    acAbout: TAction;
+    acSelectProfile: TAction;
+    acSelectProfile1: TMenuItem;
+    N4: TMenuItem;
+    TrayIcon: TTrayIcon;
+    COMPortTimer: TTimer;
+    acExit: TAction;
+    ComPort: TComPort;
+    acDisconnect: TAction;
+    acConnect: TAction;
+    Connect1: TMenuItem;
+    Disconnect1: TMenuItem;
+    N6: TMenuItem;
+    procedure DataModuleCreate(Sender: TObject);
+    procedure DataModuleDestroy(Sender: TObject);
+    procedure actSettingsExecute(Sender: TObject);
+    procedure acAddPasswordExecute(Sender: TObject);
+    procedure acRemovePasswordExecute(Sender: TObject);
+    procedure acClearPasswordsExecute(Sender: TObject);
+    procedure acEditPasswordExecute(Sender: TObject);
+    procedure acTypePasswordExecute(Sender: TObject);
+    procedure acAddProfileExecute(Sender: TObject);
+    procedure acSelectProfileExecute(Sender: TObject);
+    procedure acAboutExecute(Sender: TObject);
+    procedure TrayIconClick(Sender: TObject);
+    procedure acExitExecute(Sender: TObject);
+    procedure ComPortAfterClose(Sender: TObject);
+    procedure ComPortAfterOpen(Sender: TObject);
+    procedure acDisconnectExecute(Sender: TObject);
+    procedure acConnectExecute(Sender: TObject);
+    procedure ComPortRxChar(Sender: TObject; Count: Integer);
+    procedure ComPortException(Sender: TObject; TComException: TComExceptions;
+      ComportMessage: string; WinError: Int64; WinMessage: string);
+    procedure ComPortBreak(Sender: TObject);
+    procedure ComPortError(Sender: TObject; Errors: TComErrors);
+    procedure COMPortTimerTimer(Sender: TObject);
+  private
+    { Private declarations }
+    USB : TComponentUSB;
+
+    Profile: string;
+    ProfilePassword: string;
+
+    COMBuffer   : string;
+    COMResponse : string;
+
+    procedure WriteToCOMPort(const Str: string);
+    function WaitForResponse : string;
+    function MaxPasswords : Integer;
+    procedure OnUSBChange(Sender: TObject);
+    procedure OnApplicationMinimize(Sender:TObject);
+    procedure Delay(Milliseconds: Integer);
+  public
+    { Public declarations }
+    HotKeys: array of Integer;
+
+    function LockWorkStation: Boolean;
+    function DoTypePassword(const Index: Integer) : Boolean;
+    procedure EnableGUI(const Enable: Boolean = True);
+    procedure LoadProfile(const Filename: string);
+    procedure SaveProfile(const Filename: string);
+    procedure NewProfile(const Filename: string; const StrLength: Integer = 20;
+      const DefaultPassword: Integer = 0; const PressReturn: Boolean = True;
+      const TypeDelay: Integer = 0; const Password: string = ''; const Port: string = '');
+    function ApplicationVersion : string;
+    procedure RegisterHotkeys;
+    procedure UnRegisterHotkeys;
+    procedure ShortCutToHotKey(HotKey: TShortCut; var Key : Word; var Modifiers: Uint);
+    procedure EnumComPorts(Ports: TStrings);
+    function ConnectToPassDuino : Boolean;
+    procedure DisconnectPassDuino;
+    function GetPasswordFromPassDuino(const Index: Integer) : string;
+  end;
+
+var
+  dmFunctions: TdmFunctions;
+
+const
+  // Change this if you use a arduino with more/less EEPROM
+  // The -10 is for the Integer values (5 * 2 bytes)
+  EEPROMSize = 1024 - 10;
+
+const
+  // Change this if you set another delimiter in the PassDuino
+  COMDelimiter = '|';
+
+const
+  // Messages
+  StrMaxPasswords    = 'You reached the max amount of passwords!';
+  StrClearPasswords  = 'Are you sure you want to remove all passwords?';
+  StrUpdatePasswords = 'Because the Password length changed the passwords will be rewritten. This can take a moment.';
+
+const
+  About = 'PassDuino'                                           + #13#10#13#10 +
+          'This application is made by ERDesigns.eu - Ernst Reidinga' + #13#10 +
+          'It is a open-source application for use with the Arduino,' + #13#10 +
+          'to simulate a keyboard to safely store your password''s'   + #13#10 +
+          'and to lock your PC when the PassDuino is removed.'  + #13#10#13#10 +
+          'Version: %s'                                         + #13#10#13#10 +
+          'Please like us on facebook: https://fb.me/erdesigns.eu'    + #13#10 +
+          'and for more tools and code go to https://erdesigns.eu';
+
+implementation
+
+{%CLASSGROUP 'Vcl.Controls.TControl'}
+
+{$R *.dfm}
+
+uses untMain, untSettings, untAddPassword, untEditPassword, untAddProfile,
+     untSelectProfile, IniFiles, Math, SetupApi, Registry;
+
+//
+//  On DataModule Create
+//
+procedure TdmFunctions.DataModuleCreate(Sender: TObject);
+var
+  Ini            : TIniFile;
+  Path, Filename : string;
+begin
+  USB := TComponentUSB.Create(Self);
+  USB.OnUSBArrival := OnUSBChange;
+  USB.OnUSBRemove  := OnUSBChange;
+  Application.OnMinimize := OnApplicationMinimize;
+  Ini := TIniFile.Create(ExtractFileDir(Application.ExeName) + '\PassDuino.ini');
+  try
+    Path     := ExtractFileDir(Application.ExeName) + '\Profiles';
+    Filename := Format('%s\%s.pdp', [Path, Ini.ReadString('Settings', 'DefaultProfile', '')]);
+    if FileExists(Filename) then LoadProfile(Filename);
+  finally
+    Ini.Free;
+  end;
+end;
+
+//
+//  On DataModule Destroy
+//
+procedure TdmFunctions.DataModuleDestroy(Sender: TObject);
+begin
+  USB.Free;
+  UnRegisterHotkeys;
+end;
+
+//
+//  Action: Settings
+//
+procedure TdmFunctions.actSettingsExecute(Sender: TObject);
+var
+  SL, I, P : Integer;
+  T        : string;
+const
+  B  : array [Boolean] of Integer = (0, 1);
+begin
+  SL := frmSettings.seStringLength.Value;
+  with frmSettings do
+  case Execute of
+    mrOK :
+    begin
+      frmSettings.SaveSettings;
+      if SL <> frmSettings.seStringLength.Value then
+      with frmMain do
+      begin
+        Application.MessageBox(StrUpdatePasswords, PChar(Application.Title), MB_ICONINFORMATION + MB_OK);
+        WriteToCOMPort(Format('SET%sINT%s%d%s%d', [COMDelimiter, COMDelimiter, 0, COMDelimiter, seStringLength.Value]));
+        T := WaitForResponse;
+        for I := 0 to lvPasswords.Items.Count -1 do
+        if TryStrToInt(lvPasswords.Items[I].Caption, P) then
+        begin
+          WriteToCOMPort(Format('SET%sSTR%s%d%s%s', [COMDelimiter, COMDelimiter, P, COMDelimiter, lvPasswords.Items[I].SubItems[1]]));
+          T := WaitForResponse;
+        end;
+        StatusBar.Panels[1].Text := Format('Stored: %d', [lvPasswords.Items.Count]);
+        StatusBar.Panels[2].Text := Format('Max: %d', [MaxPasswords]);
+      end;
+      WriteToCOMPort(Format('SET%sINT%s%d%s%d', [COMDelimiter, COMDelimiter, 1, COMDelimiter, seDefaultPassword.Value]));
+      T := WaitForResponse;
+      WriteToCOMPort(Format('SET%sINT%s%d%s%d', [COMDelimiter, COMDelimiter, 2, COMDelimiter, B[cbPressReturn.Checked]]));
+      T := WaitForResponse;
+      WriteToCOMPort(Format('SET%sINT%s%d%s%d', [COMDelimiter, COMDelimiter, 3, COMDelimiter, seTypeDelay.Value]));
+      T := WaitForResponse;
+    end;
+    mrCancel:;
+  end;
+end;
+
+//
+//  Exit Application
+//
+procedure TdmFunctions.acExitExecute(Sender: TObject);
+begin
+  if COMPort.Connected then COMPort.Close;
+  Application.Terminate;
+end;
+
+//
+//  COM Port Closed
+//
+procedure TdmFunctions.ComPortAfterClose(Sender: TObject);
+begin
+  COMBuffer   := '';
+  COMResponse := '';
+  acDisconnect.Enabled := False;
+  acConnect.Enabled    := True;
+end;
+
+//
+//  COM Port Opened
+//
+procedure TdmFunctions.ComPortAfterOpen(Sender: TObject);
+begin
+  COMBuffer   := '';
+  COMResponse := '';
+  acDisconnect.Enabled := True;
+  acConnect.Enabled    := False;
+end;
+
+//
+//  Disconnect
+//
+procedure TdmFunctions.acDisconnectExecute(Sender: TObject);
+begin
+  if COMPort.Connected then DisconnectPassDuino;
+end;
+
+//
+//  Connect
+//
+procedure TdmFunctions.acConnectExecute(Sender: TObject);
+var
+  I, P : Integer;
+begin
+  if ConnectToPassDuino then
+  with frmMain do
+  begin
+    // Load passwords..
+    for I := 0 to lvPasswords.Items.Count -1 do
+    if TryStrToInt(lvPasswords.Items[I].Caption, P) then
+    lvPasswords.Items[I].SubItems[1] := GetPasswordFromPassDuino(P);
+  end else
+  begin
+    // Can not connect !
+  end;
+end;
+
+procedure TdmFunctions.ComPortRxChar(Sender: TObject; Count: Integer);
+var
+  S : string;
+begin
+  // Read characters from comport
+  COMPort.ReadStr(S, Count);
+  // If there is a ">" found we know there is full response.
+  if S[Length(S)] = '>' then
+  begin
+    S := COMBuffer + S;
+    S := Trim(StringReplace(S, #13, ' ', [rfReplaceAll]));
+    S := Trim(StringReplace(S, #10, ' ', [rfReplaceAll]));
+    S := Trim(StringReplace(S, '>', '', [rfReplaceAll]));
+    COMResponse := S;
+    COMBuffer   := '';
+  end else
+  // Concat the read characters to the COMBuffer
+  begin
+    COMBuffer := COMBuffer + S;
+    Exit;
+  end;
+end;
+
+//
+//  COM Port Exception
+//
+procedure TdmFunctions.ComPortException(Sender: TObject;
+  TComException: TComExceptions; ComportMessage: string; WinError: Int64;
+  WinMessage: string);
+begin
+  if COMPort.Connected then COMPort.Close;
+end;
+
+//
+//  COM Port Break
+//
+procedure TdmFunctions.ComPortBreak(Sender: TObject);
+begin
+  //
+end;
+
+//
+// COM Port Error
+//
+procedure TdmFunctions.ComPortError(Sender: TObject; Errors: TComErrors);
+begin
+  if COMPort.Connected then COMPort.Close;
+end;
+
+//
+//  Try to auto connect
+//
+procedure TdmFunctions.COMPortTimerTimer(Sender: TObject);
+begin
+  if ConnectToPassDuino then
+  COMPortTimer.Enabled := False;
+end;
+
+//
+//  Add Password
+//
+procedure TdmFunctions.acAddPasswordExecute(Sender: TObject);
+
+  function GetLastIndex : Integer;
+  var
+    I, V : Integer;
+  begin
+    Result := 0;
+    with frmMain do
+    begin
+      for I := 0 to lvPasswords.Items.Count -1 do
+      if TryStrToInt(lvPasswords.Items[I].Caption, V) then
+      if V > Result then Result := V;
+    end;
+  end;
+
+var
+  I : Integer;
+  T : string;
+begin
+  I := GetLastIndex;
+  if I +1 >= MaxPasswords then
+    Application.MessageBox(StrMaxPasswords, PChar(Application.Title), MB_ICONWARNING + MB_OK)
+  else
+  case frmAddPassword.Execute of
+    mrOK:
+    with frmMain do with frmAddPassword do
+    begin
+      UnRegisterHotkeys;
+      with lvPasswords.Items.Add as TPassDuinoListItem do
+      begin
+        Caption := IntToStr(I +1);
+        SubItems.Add(edtTitle.Text);
+        SubItems.Add(edtPassword.Text);
+        SubItems.Add(ShortCutToText(edtHotkey.HotKey));
+        HotKey := edtHotkey.HotKey;
+      end;
+      if ComPort.Connected then
+      begin
+        WriteToCOMPort(Format('SET%sSTR%s%d%s%s', [COMDelimiter, COMDelimiter, I +1, COMDelimiter, edtPassword.Text]));
+        T := WaitForResponse;
+      end;
+      if FileExists(Profile) then SaveProfile(Profile);
+      StatusBar.Panels[1].Text := Format('Stored: %d', [lvPasswords.Items.Count]);
+      RegisterHotkeys;
+    end;
+
+    mrCancel:;
+  end;
+end;
+
+//
+//  Remove Password
+//
+procedure TdmFunctions.acRemovePasswordExecute(Sender: TObject);
+var
+  P : Integer;
+  T : string;
+begin
+  with frmMain do
+  if Assigned(lvPasswords.Selected) then
+  begin
+    if ComPort.Connected and TryStrToInt(lvPasswords.Selected.Caption, P) then
+    begin
+      WriteToCOMPort(Format('SET%sSTR%s%d%s', [COMDelimiter, COMDelimiter, P, COMDelimiter]));
+      T := WaitForResponse;
+    end;
+    lvPasswords.DeleteSelected;
+    if FileExists(Profile) then SaveProfile(Profile);
+    StatusBar.Panels[1].Text := Format('Stored: %d', [lvPasswords.Items.Count]);
+  end;
+end;
+
+//
+//  Clear Passwords
+//
+procedure TdmFunctions.acClearPasswordsExecute(Sender: TObject);
+var
+  T : string;
+begin
+  if Application.MessageBox(StrClearPasswords, PChar(Application.Title), MB_ICONQUESTION + MB_YESNO) = ID_YES then
+  with frmMain do
+  begin
+    if ComPort.Connected then
+    begin
+      WriteToCOMPort('EXE' + COMDelimiter + 'CLEAR');
+      T := WaitForResponse;
+    end;
+    lvPasswords.Items.Clear;
+    if FileExists(Profile) then SaveProfile(Profile);
+    StatusBar.Panels[1].Text := Format('Stored: %d', [lvPasswords.Items.Count]);
+  end;
+end;
+
+//
+//  Edit Password
+//
+procedure TdmFunctions.acEditPasswordExecute(Sender: TObject);
+var
+  P : Integer;
+  T : string;
+begin
+  with frmMain do
+  if Assigned(lvPasswords.Selected) then
+  begin
+    with frmEditPassword do
+    begin
+      edtTitle.Text    := lvPasswords.Selected.SubItems[0];
+      edtPassword.Text := lvPasswords.Selected.SubItems[1];
+      edtHotkey.Hotkey := TextToShortcut(lvPasswords.Selected.SubItems[2]);
+    end;
+    with frmEditPassword do
+    case Execute of
+      mrOK:
+      begin
+        UnRegisterHotkeys;
+        if ComPort.Connected and TryStrToInt(lvPasswords.Selected.Caption, P) then
+        begin
+          WriteToCOMPort(Format('SET%sSTR%s%d%s%s', [COMDelimiter, COMDelimiter, P, COMDelimiter, edtPassword.Text]));
+          T := WaitForResponse;
+        end;
+        if FileExists(Profile) then SaveProfile(Profile);
+        lvPasswords.Selected.SubItems[0] := edtTitle.Text;
+        lvPasswords.Selected.SubItems[1] := edtPassword.Text;
+        lvPasswords.Selected.SubItems[2] := ShortCutToText(edtHotkey.HotKey);
+        (lvPasswords.Selected as TPassDuinoListItem).HotKey := edtHotkey.HotKey;
+        if FileExists(Profile) then SaveProfile(Profile);
+        RegisterHotkeys;
+      end;
+
+      mrCancel:;
+    end;
+  end;
+end;
+
+//
+//  Type Password
+//
+procedure TdmFunctions.acTypePasswordExecute(Sender: TObject);
+begin
+  if Assigned(frmMain.lvPasswords.Selected) then
+  DoTypePassword(frmMain.lvPasswords.Selected.Index);
+end;
+
+//
+//  Add new Profile
+//
+procedure TdmFunctions.acAddProfileExecute(Sender: TObject);
+var
+  Path : string;
+  Port : string;
+begin
+  with frmAddProfile do
+  case Execute of
+    mrOK:
+    begin
+      Path := ExtractFileDir(Application.ExeName) + '\Profiles';
+      if not DirectoryExists(Path) then CreateDir(Path);
+      Port := Copy(cbCOMPort.Text, LastDelimiter('(', cbCOMPort.Text) +1, LastDelimiter(')', cbCOMPort.Text) - LastDelimiter('(', cbCOMPort.Text) -1);
+      NewProfile(
+        Format('%s\%s.pdp', [Path, edtProfileName.Text]),
+        seStringLength.Value,
+        seDefaultPassword.Value,
+        cbPressReturn.Checked,
+        seTypeDelay.Value,
+        edtPassDuinoPassword.Text,
+        Port
+      );
+    end;
+
+    mrCancel:;
+  end;
+end;
+
+//
+//  Select Profile (Load profile)
+//
+procedure TdmFunctions.acSelectProfileExecute(Sender: TObject);
+var
+  Path : string;
+begin
+  with frmSelectProfile do
+  case Execute of
+    mrOK:
+    if cbProfile.ItemIndex > -1 then
+    begin
+      Path := ExtractFileDir(Application.ExeName) + '\Profiles';
+      LoadProfile(Format('%s\%s.pdp', [Path, cbProfile.Text]));
+    end;
+
+    mrCancel:;
+  end;
+end;
+
+//
+//  About this application
+//
+procedure TdmFunctions.acAboutExecute(Sender: TObject);
+begin
+  Application.MessageBox(PChar(Format(About, [ApplicationVersion])), PChar(Application.Title), MB_ICONINFORMATION + MB_OK);
+end;
+
+//
+//  On TrayIcon Click
+//
+procedure TdmFunctions.TrayIconClick(Sender: TObject);
+begin
+  if frmSettings.cbMinimizeTray.Checked or (not frmMain.Visible) then
+  begin
+    if frmMain.Visible then
+      Application.Minimize
+    else
+    begin
+      frmMain.Show;
+      Application.RestoreTopMosts;
+    end;
+  end;
+end;
+
+// Write to COM Port
+procedure TdmFunctions.WriteToCOMPort(const Str: string);
+begin
+  if (not COMPort.Connected) then Exit;
+  COMPort.WriteStr(Str + #13);
+end;
+
+// Wait until we have a response (command)
+function TdmFunctions.WaitForResponse : string;
+var
+  LoopCount: Integer;
+begin
+  LoopCount := 0;
+  while (COMResponse = '') do
+  begin
+    if LoopCount < 10 then
+      Inc(LoopCount)
+    else
+      Break;
+    Delay(100);
+  end;
+  Result := COMResponse;
+  COMResponse := '';
+end;
+
+//
+//  Calculate Max Passwords based on String Length
+//
+function TdmFunctions.MaxPasswords : Integer;
+begin
+  Result := Floor(EEPROMSize / frmSettings.seStringLength.Value);
+end;
+
+//
+//  On USB Change
+//
+procedure TdmFunctions.OnUSBChange(Sender: TObject);
+var
+  SL : TStringList;
+  I  : Integer;
+  F  : Boolean;
+begin
+  SL := TStringList.Create;
+  try
+    EnumComPorts(SL);
+    F := False;
+    for I := 0 to SL.Count -1 do
+    if Pos(COMPort.Port, SL[I]) > 0 then
+    begin
+      F := True;
+      Break;
+    end;
+    if not F then
+    begin
+      if frmSettings.cbAutoLock.Checked then LockWorkStation;
+      COMport.Close;
+      if frmSettings.cbAutoConnect.Checked then
+        COMPortTimer.Enabled := True;
+    end;
+  finally
+    SL.Free;
+  end;
+end;
+
+//
+//  Application Minimized
+//
+procedure TdmFunctions.OnApplicationMinimize(Sender:TObject);
+begin
+  if frmSettings.cbMinimizeTray.Checked then frmMain.Hide;
+end;
+
+//
+//  Alternative to sleep - resource sparing
+//
+procedure TdmFunctions.Delay(Milliseconds: Integer);
+var
+  Tick: DWORD;
+  Event: THandle;
+begin
+  Event := CreateEvent(nil, False, False, nil);
+  try
+    Tick := GetTickCount + DWORD(Milliseconds);
+    while (Milliseconds > 0) and
+      (MsgWaitForMultipleObjects(1, Event, False, Milliseconds,
+      QS_ALLINPUT) <> WAIT_TIMEOUT) do
+    begin
+      Application.ProcessMessages;
+      Milliseconds := Tick - GetTickCount;
+    end;
+  finally
+    CloseHandle(Event);
+  end;
+end;
+
+//
+//  Lock Workstation
+//
+function TdmFunctions.LockWorkStation: Boolean;
+type
+  TLockWorkStation = function: Boolean;
+var
+  hUser32         : HMODULE;
+  LockWorkStation : TLockWorkStation;
+begin
+  Result  := False;
+  hUser32 := GetModuleHandle('USER32.DLL');
+  if hUser32 <> 0 then
+  begin
+    @LockWorkStation := GetProcAddress(hUser32, 'LockWorkStation');
+    if @LockWorkStation <> nil then
+    begin
+      LockWorkStation;
+      Result := True;
+    end;
+  end;
+end;
+
+//
+//  Type Password
+//
+function TdmFunctions.DoTypePassword(const Index: Integer) : Boolean;
+begin
+  Result := False;
+  if ComPort.Connected then
+  begin
+    if frmSettings.seTypeDelay.Value = 0 then Delay(1000);
+    WriteToCOMPort(Format('EXE%sTYPE%s%d', [COMDelimiter, COMDelimiter, Index]));
+    Result := WaitForResponse <> 'ERROR';
+  end;
+end;
+
+//
+//  Enable / Disable the actions
+//
+procedure TdmFunctions.EnableGUI(const Enable: Boolean = True);
+begin
+  acAddPassword.Enabled    := Enable;
+  acRemovePassword.Enabled := Enable;
+  acClearPasswords.Enabled := Enable;
+  acEditPassword.Enabled   := Enable;
+  acTypePassword.Enabled   := Enable;
+end;
+
+//
+//  Load Profile
+//
+procedure TdmFunctions.LoadProfile(const Filename: string);
+var
+  SL   : TStringList;
+  Ini  : TIniFile;
+  I, P : Integer;
+  SelectProfile : Boolean;
+begin
+  SelectProfile := False;
+  UnRegisterHotkeys;
+  Profile := Filename;
+  SL  := TStringList.Create;
+  Ini := TIniFile.Create(Filename);
+  try
+    with frmSettings do
+    begin
+      seStringLength.Value    := Ini.ReadInteger('PassDuino', 'StringLength', 20);
+      seDefaultPassword.Value := Ini.ReadInteger('PassDuino', 'DefaultPassword', 0);
+      cbPressReturn.Checked   := Ini.ReadBool('PassDuino', 'PressReturn', True);
+      seTypeDelay.Value       := Ini.ReadInteger('PassDuino', 'TypeDelay', 0);
+      ProfilePassword         := Ini.ReadString('PassDuino', 'Password', '');
+      ComPort.Port            := Ini.ReadString('PassDuino', 'COMPort', '');
+    end;
+    if not ConnectToPassDuino then
+    begin
+      SelectProfile := frmSettings.cbSelectProfileDialog.Checked;
+    end else
+    with frmMain do
+    begin
+      lvPasswords.Items.Clear;
+      Ini.ReadSections(SL);
+      for I := 0 to SL.Count -1 do
+      if TryStrToInt(Ini.ReadString(SL[I], 'Index', ''), P) then
+      with (lvPasswords.Items.Add as TPassDuinoListItem) do
+      begin
+        Caption := Ini.ReadString(SL[I], 'Index', '-');
+        SubItems.Add(Ini.ReadString(SL[I], 'Title', ''));
+        if ComPort.Connected then
+        begin
+          SubItems.Add(GetPasswordFromPassDuino(P));
+        end else
+          SubItems.Add('');
+        SubItems.Add(Ini.ReadString(SL[I], 'Hotkey', ''));
+        HotKey := TextToShortcut(Ini.ReadString(SL[I], 'Hotkey', ''));
+      end;
+      StatusBar.Panels[0].Text := Format('Profile: %s', [ChangeFileExt(ExtractFilename(Filename), '')]);
+      StatusBar.Panels[1].Text := Format('Stored: %d', [lvPasswords.Items.Count]);
+      StatusBar.Panels[2].Text := Format('Max: %d', [MaxPasswords]);
+      EnableGUI;
+      RegisterHotkeys;
+    end;
+  finally
+    SL.Free;
+    Ini.Free;
+  end;
+  if SelectProfile then acSelectProfile.Execute;
+end;
+
+//
+//  Save Profile
+//
+procedure TdmFunctions.SaveProfile(const Filename: string);
+var
+  Ini : TIniFile;
+  I   : Integer;
+begin
+  if FileExists(Filename) then DeleteFile(PChar(Filename));
+  Ini := TIniFile.Create(Filename);
+  try
+    with frmSettings do
+    begin
+      Ini.WriteInteger('PassDuino', 'StringLength', seStringLength.Value);
+      Ini.WriteInteger('PassDuino', 'DefaultPassword', seDefaultPassword.Value);
+      Ini.WriteBool('PassDuino', 'PressReturn', cbPressReturn.Checked);
+      Ini.WriteInteger('PassDuino', 'TypeDelay', seTypeDelay.Value);
+    end;
+    with frmMain do
+    begin
+      for I := 0 to lvPasswords.Items.Count -1 do
+      begin
+        Ini.WriteString(IntToStr(I), 'Index', lvPasswords.Items[I].Caption);
+        Ini.WriteString(IntToStr(I), 'Title', lvPasswords.Items[I].SubItems[0]);
+        Ini.WriteString(IntToStr(I), 'Hotkey', lvPasswords.Items[I].SubItems[2]);
+      end;
+    end;
+  finally
+    Ini.Free;
+  end;
+end;
+
+//
+//  New Empty Profile
+//
+procedure TdmFunctions.NewProfile(const Filename: string; const StrLength: Integer = 20;
+  const DefaultPassword: Integer = 0; const PressReturn: Boolean = True;
+  const TypeDelay: Integer = 0; const Password: string = ''; const Port: string = '');
+var
+  Ini : TIniFile;
+begin
+  Profile := Filename;
+  Ini := TIniFile.Create(Filename);
+  try
+    with frmSettings do
+    begin
+      seStringLength.Value    := StrLength;
+      seDefaultPassword.Value := DefaultPassword;
+      cbPressReturn.Checked   := PressReturn;
+      seTypeDelay.Value       := TypeDelay;
+      ProfilePassword         := Password;
+      COMPort.Port            := Port;
+
+      Ini.WriteInteger('PassDuino', 'StringLength', StrLength);
+      Ini.WriteInteger('PassDuino', 'DefaultPassword', DefaultPassword);
+      Ini.WriteBool('PassDuino', 'PressReturn', PressReturn);
+      Ini.WriteInteger('PassDuino', 'TypeDelay', TypeDelay);
+      Ini.WriteString('PassDuino', 'Password', Password);
+      Ini.WriteString('PassDuino', 'COMPort', Port);
+    end;
+    with frmMain do
+    begin
+      lvPasswords.Items.Clear;
+      StatusBar.Panels[0].Text := Format('Profile: %s', [ExtractFilename(Filename)]);
+      StatusBar.Panels[1].Text := Format('Stored: %d', [lvPasswords.Items.Count]);
+      StatusBar.Panels[2].Text := Format('Max: %d', [MaxPasswords]);
+    end;
+    EnableGUI;
+  finally
+    Ini.Free;
+  end;
+end;
+
+//
+//  Get the Application Version as a string (x.x.x.x)
+//
+function TdmFunctions.ApplicationVersion : string;
+var
+  Exe        : string;
+  Sz, Handle : DWORD;
+  Buffer     : TBytes;
+  FixedPtr   : PVSFixedFileInfo;
+begin
+  Exe := ParamStr(0);
+  Sz := GetFileVersionInfoSize(PChar(Exe), Handle);
+  if Sz = 0 then RaiseLastOSError;
+  SetLength(Buffer, Sz);
+  if not GetFileVersionInfo(PChar(Exe), Handle, Sz, Buffer) then RaiseLastOSError;
+  if not VerQueryValue(Buffer, '\', Pointer(FixedPtr), Sz)  then RaiseLastOSError;
+  Result := Format('%d.%d.%d.%d',
+  [LongRec(FixedPtr.dwFileVersionMS).Hi,  //major
+   LongRec(FixedPtr.dwFileVersionMS).Lo,  //minor
+   LongRec(FixedPtr.dwFileVersionLS).Hi,  //release
+   LongRec(FixedPtr.dwFileVersionLS).Lo]) //build
+end;
+
+//
+//  Register Hotkeys
+//
+procedure TdmFunctions.RegisterHotkeys;
+var
+  I   : Integer;
+  Key : Word;
+  Modifiers: UINT;
+begin
+  with frmMain do
+  begin
+    SetLength(HotKeys, lvPasswords.Items.Count);
+    for I := 0 to lvPasswords.Items.Count -1 do
+    if (lvPasswords.Items[I] as TPassDuinoListItem).HotKey <> 0 then
+    begin
+      ShortCutToHotKey((lvPasswords.Items[I] as TPassDuinoListItem).HotKey, Key, Modifiers);
+      HotKeys[I] := GlobalAddAtom(PChar(Format('PassDuino_HotKey_%d', [I])));
+      RegisterHotKey(frmMain.Handle, HotKeys[I], Modifiers, Key);
+    end else
+      HotKeys[I] := -1;
+  end;
+end;
+
+//
+//  Un Register Hotkeys
+//
+procedure TdmFunctions.UnRegisterHotkeys;
+var
+  I : Integer;
+begin
+  if Length(HotKeys) = 0 then Exit;
+  for I := 0 to Length(HotKeys) do
+  if HotKeys[I] <> -1 then
+  begin
+    UnRegisterHotKey(frmMain.Handle, HotKeys[I]);
+    GlobalDeleteAtom(HotKeys[I]);
+  end;
+  SetLength(HotKeys, 0);
+end;
+
+//
+//  TShortCut to HotKey (for registering system wide hotkeys)
+//
+procedure TdmFunctions.ShortCutToHotKey(HotKey: TShortCut; var Key : Word; var Modifiers: Uint);
+var
+  Shift: TShiftState;
+begin
+  ShortCutToKey(HotKey, Key, Shift);
+  Modifiers := 0;
+  if (ssShift in Shift) then
+  Modifiers := Modifiers or MOD_SHIFT;
+  if (ssAlt in Shift) then
+  Modifiers := Modifiers or MOD_ALT;
+  if (ssCtrl in Shift) then
+  Modifiers := Modifiers or MOD_CONTROL;
+end;
+
+//
+//  Enumerate Available ComPorts *** Used SetupAPI unit from JEDI VCL ***
+//  Found here: http://delphi.cjcsoft.net/viewthread.php?tid=45021
+//
+procedure TdmFunctions.EnumComPorts(Ports: TStrings);
+var
+  RequiredSize:             Cardinal;
+  GUIDSize:                 DWORD;
+  Guid:                     TGUID;
+  DevInfoHandle:            HDEVINFO;
+  DeviceInfoData:           TSPDevInfoData;
+  MemberIndex:              Cardinal;
+  PropertyRegDataType:      DWord;
+  RegProperty:              Cardinal;
+  RegTyp:                   Cardinal;
+  Key:                      Hkey;
+  Info:                     TRegKeyInfo;
+  S1,S2:                    string;
+begin
+  if not LoadsetupAPI then exit;
+  try
+    GUIDSize := 1;
+    if SetupDiClassGuidsFromName('Ports', @Guid, GUIDSize, RequiredSize) then
+    begin
+      DevInfoHandle := SetupDiGetClassDevs(@Guid, nil, 0, DIGCF_PRESENT);
+      if Cardinal(DevInfoHandle) <> Invalid_Handle_Value then
+      begin
+        try
+          MemberIndex := 0;
+          repeat
+            FillChar(DeviceInfoData, SizeOf(DeviceInfoData), 0);
+            DeviceInfoData.cbSize := SizeOf(DeviceInfoData);
+            if not SetupDiEnumDeviceInfo(DevInfoHandle, MemberIndex, DeviceInfoData) then break;
+            RegProperty := SPDRP_FriendlyName;
+            SetupDiGetDeviceRegistryPropertyW(DevInfoHandle, DeviceInfoData, RegProperty, PropertyRegDataType, nil, 0, RequiredSize);
+            SetLength(S1, RequiredSize);
+            if SetupDiGetDeviceRegistryPropertyW(DevInfoHandle, DeviceInfoData, RegProperty, PropertyRegDataType, @S1[1], RequiredSize, RequiredSize) then
+            begin
+              KEY := SetupDiOpenDevRegKey(DevInfoHandle, DeviceInfoData, DICS_FLAG_GLOBAL, 0, DIREG_DEV,KEY_READ);
+              if KEY <> INVALID_HANDLE_VALUE then
+              begin
+                FillChar(Info, SizeOf(Info), 0);
+                if RegQueryInfoKey(Key, nil, nil, nil, @Info.NumSubKeys,@Info.MaxSubKeyLen, nil, @Info.NumValues, @Info.MaxValueLen, @Info.MaxDataLen, nil, @Info.FileTime) = ERROR_SUCCESS then
+                begin
+                  RequiredSize := Info.MaxValueLen + 1;
+                  SetLength(S2, RequiredSize);
+                  if RegQueryValueEx(KEY, 'PortName', nil, @Regtyp, @s2[1], @RequiredSize) = Error_Success then
+                  if (Pos('COM', S2) = 1) then
+                  begin
+                    if Pos('(COM', S1) > 0 then
+                      Ports.Add(StrPas(PChar(S1)))
+                    else
+                      Ports.Add(StrPas(PChar(S1)) + Format('(%s)', [StrPas(PChar(S1))]));
+                  end;
+                end;
+                RegCloseKey(key);
+              end;
+            end;
+            Inc(MemberIndex);
+          until False;
+        finally
+         SetupDiDestroyDeviceInfoList(DevInfoHandle);
+        end;
+      end;
+    end;
+  finally
+    UnloadSetupApi;
+  end;
+end;
+
+//
+//  Connect to the PassDuino, and try to start the Configuration mode
+//  so we can read/type the passwords.
+//
+function TdmFunctions.ConnectToPassDuino : Boolean;
+var
+  Temp : string;
+begin
+  Result := False;
+  COMPort.Open;
+  COMPort.ClearBuffer(True, True);
+  if COMPort.Connected then
+  begin
+    // Sometimes the CONFIG mode is still active, so we want to close that first
+    WriteToCOMPort('STOPCONFIG');
+    Temp := WaitForResponse;
+
+    // Enter configuration Mode
+    WriteToCOMPort('STARTCONFIG' + COMDelimiter + ProfilePassword);
+    Temp := WaitForResponse;
+
+    // Change this if you changed the welcome message in the PassDuino
+    Result := (Temp = 'Configuration mode is started.') or (not (Temp = 'ERROR'));
+
+    // If connection failed close the Comport.
+    if not Result then COMPort.Close;
+  end;
+end;
+
+//
+//  Disconnect, stop the configuration mode
+//
+procedure TdmFunctions.DisconnectPassDuino;
+begin
+  if COMPort.Connected then
+  begin
+    WriteToCOMPort('STOPCONFIG');
+    COMPort.Close;
+  end;
+end;
+
+//
+//  Try to get the password from the PassDuino
+//
+function TdmFunctions.GetPasswordFromPassDuino(const Index: Integer)  : string;
+var
+  Temp : string;
+begin
+  Result := '';
+  if COMPort.Connected then
+  begin
+    // Try get password
+    WriteToCOMPort(Format('GET%sSTR%s%d', [COMDelimiter, COMDelimiter, Index]));
+    Temp := WaitForResponse;
+    if Temp <> 'ERROR' then Result := Temp;
+  end;
+end;
+
+end.

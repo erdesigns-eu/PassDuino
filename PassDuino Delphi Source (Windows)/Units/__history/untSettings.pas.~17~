@@ -1,0 +1,154 @@
+//
+//  PassDuino
+//  Version 1.0 (August 2020)
+//
+//  Made by ERDesigns - Ernst Reidinga
+//  as an open-source project
+//
+//  If you change code, add functions, fix bugs or anything else
+//  please share them - so i can update the GIT and update the code
+//  on the website so others can use it too :)
+//
+//  I used some open-source / public domain - code from Torry, and SourceForce.
+//
+//  If you like my work, and you like to support by donating please send a mail
+//  and ill send my paypal address where you can send the donation.
+//
+//
+
+unit untSettings;
+
+interface
+
+uses
+  Winapi.Windows, Winapi.Messages, System.SysUtils, System.Variants, System.Classes, Vcl.Graphics,
+  Vcl.Controls, Vcl.Forms, Vcl.Dialogs, Vcl.StdCtrls, dxGDIPlusClasses,
+  Vcl.ExtCtrls, Vcl.ComCtrls, Vcl.Samples.Spin;
+
+type
+  TfrmSettings = class(TForm)
+    Panel1: TPanel;
+    Image1: TImage;
+    Label1: TLabel;
+    Label2: TLabel;
+    Panel2: TPanel;
+    btnCancel: TButton;
+    btnOK: TButton;
+    PC: TPageControl;
+    tsPC: TTabSheet;
+    tsPassDuino: TTabSheet;
+    cbAutoConnect: TCheckBox;
+    cbAutoLock: TCheckBox;
+    cbMinimizeTray: TCheckBox;
+    lblDefaultProfile: TLabel;
+    cbDefaultProfile: TComboBox;
+    Label3: TLabel;
+    edtPassDuinoName: TEdit;
+    cbSelectProfileDialog: TCheckBox;
+    Label4: TLabel;
+    seStringLength: TSpinEdit;
+    Label5: TLabel;
+    seDefaultPassword: TSpinEdit;
+    Label6: TLabel;
+    seTypeDelay: TSpinEdit;
+    cbPressReturn: TCheckBox;
+    procedure FormCreate(Sender: TObject);
+  private
+    { Private declarations }
+    procedure LoadProfiles;
+    procedure LoadSettings;
+  public
+    { Public declarations }
+    procedure SaveSettings;
+    function Execute : TModalResult;
+  end;
+
+var
+  frmSettings: TfrmSettings;
+
+implementation
+
+{$R *.dfm}
+
+uses untFunctions, IniFiles;
+
+//
+//  Load Profiles in the ComboBox
+//
+procedure TfrmSettings.LoadProfiles;
+var
+  Path : string;
+  SRec : TSearchRec;
+begin
+  cbDefaultProfile.Clear;
+  Path := ExtractFileDir(Application.ExeName) + '\Profiles\';
+  if not DirectoryExists(Path) then CreateDir(Path);
+  if FindFirst(Path + '*.pdp', faArchive, SRec) = 0 then
+  begin
+    repeat
+      cbDefaultProfile.Items.Add(ChangeFileExt(ExtractFilename(SRec.Name), ''));
+    until FindNext(SRec) <> 0;
+    FindClose(SRec);
+  end;
+end;
+
+//
+//  Load Settings from INI
+//
+procedure TfrmSettings.LoadSettings;
+var
+  Ini : TIniFile;
+begin
+  Ini := TIniFile.Create(ExtractFileDir(Application.ExeName) + '\PassDuino.ini');
+  try
+    cbAutoConnect.Checked         := Ini.ReadBool('Settings', 'AutoConnect', True);
+    cbAutoLock.Checked            := Ini.ReadBool('Settings', 'AutoLock', True);
+    cbMinimizeTray.Checked        := Ini.ReadBool('Settings', 'MinimizeTray', True);
+    cbSelectProfileDialog.Checked := Ini.ReadBool('Settings', 'SelectProfileDialog', True);
+    cbDefaultProfile.Text         := Ini.ReadString('Settings', 'DefaultProfile', '');
+    edtPassDuinoName.Text         := Ini.ReadString('Settings', 'DeviceName', '');
+  finally
+    Ini.Free;
+  end;
+end;
+
+//
+//  Save Settings to INI
+//
+procedure TfrmSettings.SaveSettings;
+var
+  Ini : TIniFile;
+begin
+  Ini := TIniFile.Create(ExtractFileDir(Application.ExeName) + '\PassDuino.ini');
+  try
+    Ini.WriteBool('Settings', 'AutoConnect', cbAutoConnect.Checked);
+    Ini.WriteBool('Settings', 'AutoLock', cbAutoLock.Checked);
+    Ini.WriteBool('Settings', 'MinimizeTray', cbMinimizeTray.Checked);
+    Ini.WriteBool('Settings', 'SelectProfileDialog', cbSelectProfileDialog.Checked);
+    Ini.WriteString('Settings', 'DefaultProfile', cbDefaultProfile.Text);
+    Ini.WriteString('Settings', 'DeviceName', edtPassDuinoName.Text);
+  finally
+    Ini.Free;
+  end;
+end;
+
+//
+//  Execute Settings
+//
+function TfrmSettings.Execute : TModalResult;
+begin
+  LoadProfiles;
+  LoadSettings;
+  Result := ShowModal;
+end;
+
+//
+//  On Form Create
+//
+procedure TfrmSettings.FormCreate(Sender: TObject);
+begin
+  LoadSettings;
+end;
+
+
+end.

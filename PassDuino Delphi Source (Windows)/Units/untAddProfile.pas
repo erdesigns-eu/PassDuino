@@ -1,0 +1,83 @@
+//
+//  PassDuino
+//  Version 1.0 (August 2020)
+//
+//  Made by ERDesigns - Ernst Reidinga
+//  as an open-source project
+//
+//  If you change code, add functions, fix bugs or anything else
+//  please share them - so i can update the GIT and update the code
+//  on the website so others can use it too :)
+//
+//  I used some open-source / public domain - code from Torry, and SourceForce.
+//
+//  If you like my work, and you like to support by donating please send a mail
+//  and ill send my paypal address where you can send the donation.
+//
+//
+
+unit untAddProfile;
+
+interface
+
+uses
+  Winapi.Windows, Winapi.Messages, System.SysUtils, System.Variants, System.Classes, Vcl.Graphics,
+  Vcl.Controls, Vcl.Forms, Vcl.Dialogs, Vcl.ComCtrls, Vcl.StdCtrls,
+  dxGDIPlusClasses, Vcl.ExtCtrls, Vcl.Samples.Spin;
+
+type
+  TfrmAddProfile = class(TForm)
+    Label3: TLabel;
+    Panel1: TPanel;
+    Image1: TImage;
+    Label1: TLabel;
+    Label2: TLabel;
+    Panel2: TPanel;
+    btnCancel: TButton;
+    btnOK: TButton;
+    edtProfileName: TEdit;
+    Label4: TLabel;
+    seStringLength: TSpinEdit;
+    Label5: TLabel;
+    seDefaultPassword: TSpinEdit;
+    cbPressReturn: TCheckBox;
+    Label6: TLabel;
+    seTypeDelay: TSpinEdit;
+    Label7: TLabel;
+    edtPassDuinoPassword: TEdit;
+    cbCOMPort: TComboBox;
+    Label8: TLabel;
+  private
+    { Private declarations }
+  public
+    { Public declarations }
+    function Execute : TModalResult;
+  end;
+
+var
+  frmAddProfile: TfrmAddProfile;
+
+implementation
+
+{$R *.dfm}
+
+uses untFunctions;
+
+//
+//  Execute Dialog
+//
+function TfrmAddProfile.Execute : TModalResult;
+begin
+  dmFunctions.EnumComPorts(cbCOMPort.Items);
+  if cbCOMPort.Items.Count > 0 then
+  cbCOMPort.ItemIndex       := 0;
+  edtProfileName.Text       := '';
+  edtPassDuinoPassword.Text := '';
+  seStringLength.Value      := 20;
+  seDefaultPassword.Value   := 0;
+  cbPressReturn.Checked     := True;
+  seTypeDelay.Value         := 0;
+  Result := ShowModal;
+end;
+
+end.

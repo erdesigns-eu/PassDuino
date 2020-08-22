@@ -1,0 +1,24 @@
+program PassDuino;
+
+uses
+  Vcl.Forms,
+  untMain in '..\Units\untMain.pas' {frmMain},
+  untFunctions in '..\Units\untFunctions.pas' {dmFunctions: TDataModule},
+  untUSB in '..\Units\untUSB.pas',
+  untSettings in '..\Units\untSettings.pas' {frmSettings},
+  untAddPassword in '..\Units\untAddPassword.pas' {frmAddPassword},
+  untEditPassword in '..\Units\untEditPassword.pas' {frmEditPassword};
+
+{$R *.res}
+
+begin
+  Application.Initialize;
+  Application.MainFormOnTaskbar := True;
+  Application.Title := 'PassDuino';
+  Application.CreateForm(TfrmMain, frmMain);
+  Application.CreateForm(TdmFunctions, dmFunctions);
+  Application.CreateForm(TfrmSettings, frmSettings);
+  Application.CreateForm(TfrmAddPassword, frmAddPassword);
+  Application.CreateForm(TfrmEditPassword, frmEditPassword);
+  Application.Run;
+end.
